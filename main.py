@@ -223,6 +223,23 @@ if __name__ == "__main__":
             await ctx.respond(f"Unable to update player_map.yml.:\n{e}", ephemeral=True)
             raise e
 
+    @bot.slash_command(name="summary", description="Generate a summary of the transcriptions.")
+    async def summary(ctx: discord.context.ApplicationContext):
+        await ctx.defer(ephemeral=True)  # Immediately acknowledge the interaction
+
+        guild_id = ctx.guild_id
+        helper = bot.guild_to_helper.get(guild_id, None)
+        if not helper:
+            await ctx.respond("Well, that's awkward. I dont seem to be in your party.", ephemeral=True)
+            return
+        # Use the same log_filename as in configure_logging
+        log_directory = '.logs/transcripts'
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        log_filename = os.path.join(log_directory, f"{current_date}-transcription.log")
+        # generate the summary
+        logger.info(f"Generating summary for {ctx.guild.name} with log file {log_filename}")
+        await bot.get_summary(ctx, log_filename)
+        await ctx.respond("The summary has been generated and sent to you via channel.", ephemeral=True)
 
     @bot.slash_command(name="help", description="Show the help message.")
     async def help(ctx: discord.context.ApplicationContext):
@@ -247,8 +264,6 @@ if __name__ == "__main__":
                               fields=embed_fields)
 
         await ctx.respond(embed=embed, ephemeral=True)
-
-
 
     try:
         loop.run_until_complete(bot.start(DISCORD_BOT_TOKEN))

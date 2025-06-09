@@ -172,6 +172,7 @@ class WhisperSink(Sink):
                     result += segment.text
 
                 logger.info(f"Transcription: {result}")
+                
                 return result
         except Exception as e:
             logger.error(f"Error transcribing audio: {e}")
@@ -202,7 +203,7 @@ class WhisperSink(Sink):
         return transcription
     
     def get_transcriptions(self):
-        """Retrieve all transcriptions from the queue, format them to only include data, begin, and user_id."""
+        """Retrieve all transcriptions from the queue, format them to only include data, begin, and player name."""
         transcriptions = []
         while not self.transcription_queue.empty():
             log_message = self.transcription_queue.get_nowait()
@@ -213,13 +214,13 @@ class WhisperSink(Sink):
 
             # Extract only the desired fields from the log message
             begin = log_message.get("begin", "Unknown begin")
-            user_id = log_message.get("user_id", "Unknown user")
+            player = log_message.get("player", "Unknown player")
             data = log_message.get("data", "")
 
             # Format the transcription entry with only the relevant fields
             formatted_entry = (
                 f"Begin: {begin}\n"
-                f"User ID: {user_id}\n"
+                f"Player: {player}\n"
                 f"Data: {data}\n"
                 "-------------------------\n"
             )
