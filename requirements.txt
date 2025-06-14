@@ -27,3 +27,5 @@ speechrecognition
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch 
 
+#ollama for LLM summary and image generation
+ollama

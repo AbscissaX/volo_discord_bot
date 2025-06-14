@@ -115,6 +115,8 @@ if __name__ == "__main__":
             bot.guild_to_helper[guild_id] = helper
             await ctx.respond(f"Ah, splendid! The lore shall now flow as freely as the finest ale. 🍺 Prepare to immortalize brilliance!", ephemeral=False)
             await ctx.guild.change_voice_state(channel=author_vc.channel, self_mute=True)
+        except discord.ClientException as ce:
+            await ctx.respond("I'm already connected to a voice channel in this server. Try disconnecting me first!", ephemeral=True)
         except Exception as e:
             await ctx.respond(f"{e}", ephemeral=True)
 
@@ -240,6 +242,45 @@ if __name__ == "__main__":
         logger.info(f"Generating summary for {ctx.guild.name} with log file {log_filename}")
         await bot.get_summary(ctx, log_filename)
         await ctx.respond("The summary has been generated and sent to you via channel.", ephemeral=True)
+
+    @bot.slash_command(name="art-chronicler", description="Start Generating Art of the current recorded session every 5 mins.")
+    async def art_chronicler(ctx: discord.context.ApplicationContext):
+        logger.info(f"Art chronicler command invoked by {ctx.author.name} in guild {ctx.guild.name}")
+        logger.info(f"Guild ID: {ctx.guild_id}, User ID: {ctx.author.id}")
+        logger.info(f"Bot is currently recording: {bot.guild_is_recording.get(ctx.guild_id, False)}")
+        if not bot.guild_is_recording.get(ctx.guild_id, False):
+            await ctx.respond("I'm sorry, I can only create art if I am already scribing for you.", ephemeral=True)
+            return
+        guild_id = ctx.guild_id
+        helper = bot.guild_to_helper.get(guild_id, None)
+        if not helper:
+            await ctx.respond("Well, that's awkward. I dont seem to be in your party.", ephemeral=True)
+            return
+        #if not bot.guild_is_painting.get(ctx.guild_id, False):
+        #    await ctx.respond("I am already capturing every moment on the canvas!", ephemeral=True)
+        #    return
+        try:
+            await bot.start_art_chronicler(ctx)
+            await ctx.respond("Art chronicler has been started! 🎨", ephemeral=False)
+        except Exception as e:
+            await ctx.respond(f"Unable to start art chronicler:\n{e}", ephemeral=True)
+
+    @bot.slash_command(name="stop_art_chronicler", description="Stop Generating Art of the current recorded session.")
+    async def stop_art_chronicler(ctx: discord.context.ApplicationContext):
+        await ctx.defer(ephemeral=True)  # Immediately acknowledge the interaction
+        guild_id = ctx.guild_id
+        helper = bot.guild_to_helper.get(guild_id, None)
+        if not helper:
+            await ctx.respond("Well, that's awkward. I dont seem to be in your party.", ephemeral=True)
+            return
+        if not bot.guild_is_recording.get(ctx.guild_id, False):
+            await ctx.respond("I'm sorry, I am not yet scribing for you ..", ephemeral=True)
+            return
+        try:
+            await bot.stop_art_chronicler(ctx)
+            await ctx.respond("What a masterpiece! until next time!", ephemeral=False)
+        except Exception as e:
+            await ctx.respond(f"Unable to stop art chronicler:\n{e}", ephemeral=True)
 
     @bot.slash_command(name="help", description="Show the help message.")
     async def help(ctx: discord.context.ApplicationContext):
